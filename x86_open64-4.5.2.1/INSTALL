@@ -1,0 +1,146 @@
+Installing Open64
+=================
+
+Introduction
+------------
+
+This document explains how to compile and install x86 Open64 compiler from 
+source on an x86-64 based system.For simplicity, we describe the steps 
+that we used to build the x86 Open64 4.5.2.1 binary packages available 
+on http://developer.amd.com/cpu/open64.
+
+
+
+Open64 and external package dependency 
+--------------------------------------
+
+Minimal external packages/tools dependency for using open64 compiler 
+  glibc           - release and devel packages supporting 64 bit and 32 bit ISA  
+  libgcc          - 32 bit, 64 bit packages 
+  libstdc++       - 32 bit, 64 bit packages 
+       
+Minimal external packages/tools dependency for building open64 compiler from source 
+  gcc,g++,gfortran        
+  bison
+  flex
+  glibc-devel.x86_64
+  glibc-devel.i686
+  libgcc.i686
+
+To fully leverage the AMD Opteron Family 15h processor("Piledriver"core)
+features use binutils-2.21.51.0.6 or above.Newer OS versions like 
+SLES 11 SP2 and RHEL 6.3 come with GLIBC and Binutils which have support 
+for AMD Opteron Family 15h processor("Piledriver"core).
+
+We used 64-bit SUSE Linux Enterprise Server 11 with SP1 and with required 
+binutils to build the compiler for AMD Opteron Family 15h processor 
+("Piledriver" core).Besides, we used 64-bit SUSE Linux Enterprise Server 10
+with SP2 to build the compiler for systems that does not comply to the above
+mentioned Binutils version. 
+
+Note: 
+	If a open64 build from source attempted without the above recommended 
+	binutils on a machine with AMD Opteron Family 15h processor
+	("Piledriver"core) then the compiler build may not get completed 
+	as expected.
+  
+
+Build open64 from source 
+------------------------
+
+Although the x86 Open64 compiler suite can be built on 32-bit or 64-bit
+Linux systems, we always build on a 64-bit Linux system where both 32-bit
+and 64-bit code generation can be tested. 
+
+By default, on x86_64 machines, the compiler will be built in 64 bit
+mode and libraries will be built in 32 and 64 bit modes to support
+compilation in either mode
+
+By default, the build process will use GCC to build most compiler
+components. We used GCC 4.1.2 as provided with SLES 10 SP2 and GCC 4.3.4 as 
+provided with SLES 11 SP1. 
+
+  
+Following the below simple steps helps in building open64 for AMD x86_64
+
+ - Unpack the source (assume that the source package has been extracted as
+   x86_open64-4.5.2.1-1)
+        tar xjvf x86_open64-4.5.2.1-1.src.tar.bz2
+        
+ - Create object directory at the same level where src has been extracted    
+        mkdir obj 
+        cd obj 
+
+
+ - Configure stage
+   A compiler built on either x86-64 or x86 machine will target both
+   architectures.  
+
+   By default the compiler will get built for x86_64-unknown-linux-gnu, it can also 
+   be forced using the below option 
+
+        --build=x86_64-unknown-linux-gnu
+   
+   To build a compiler on an x86-64 machine that is compiled with the x86 ISA
+   (that is, compiled with the -m32 option), specify the following configuration
+   option:
+
+        --build=i686-unknown-linux-gnu
+
+   Select one of the below step based on your need/environment for building a
+   x84_64 compiler
+        * For all binutils
+            ../x86_open64-4.5.2.1-1/configure --build=x86_64-unknown-linux-gnu \
+            --disable-host_bdver1-support [--prefix=<INSTALL LOC>]
+
+        * If binutils supports AVX,XOP and FMA4 (version 2.21.51.0.1 or above)
+             ../x86_open64-4.5.2.1-1/configure --build=x86_64-unknown-linux-gnu \
+             [--prefix=<INSTALL LOC>]
+
+        * If binutils supports FMA3,TBM,BMI(version 2.21.51.0.6 or above)
+             ../x86_open64-4.5.2.1-1/configure --build=x86_64-unknown-linux-gnu \
+             [--prefix=<INSTALL LOC>]
+                        
+        * To obtain a debug build       
+             add the flag "--with-build-optimize=DEBUG" to any of the above 
+             configure steps based on your requirement
+                        
+        * To explore the different configure options you can use the below 
+          command   
+             ../x86_open64-4.5.2.1-1/configure --help
+        
+ - Build stage
+         make all
+         
+ - Install stage  
+        make install 
+ 
+
+ Once you have done 'make all' to make the compiler, 'make install' will
+ copy it to the location specified by the --prefix argument to configure.
+ If --prefix was not used the default install location is in /usr/local
+
+Note :
+
+ Congratulations. You have successfully installed Open64.
+
+        
+Resolving open64 package dependencies in RHEL 6.3 
+-------------------------------------------------
+
+  On RHEL6.3 x86_64, one may face issues in identifying the dependent packages 
+  needed for open64. The below command will help to resolve the external
+  package dependencies in RHEL6.3 for open64
+
+        The yum install command was provided on the assumption yum 
+        configuration is as expected in your system and the basic server 
+        package has been selected during RHEL6.3 installation 
+  
+	yum install glibc-devel.i686 glibc-devel.x86_64 
+        yum install libgcc.i686 libgcc.x86_64 
+  	yum install gcc.x86_64 gcc-c++.x86_64 gcc-gfortran.x86_64  
+    	yum install flex.x86_64  bison.x86_64
+
+
+Your Open64 Team
+

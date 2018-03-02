@@ -1,0 +1,409 @@
+
+x86 Open64 4.5.2.1 Release Notes 
+
+
+               Jan 18, 2013
+
+
+1. Overview
+
+2. Features
+
+3. The Packages of the Compiler Suite
+
+4. Supported Operating Systems
+
+5. Installing the Compiler Suite
+  5.1 Install from bz2 Package
+  5.2 Install from RPM packages
+
+6. Bug Reporting and Support
+
+7. Known Issues and Limitations
+
+
+1. Overview
+===========
+
+ This is version 4.5.2.1 of the x86 Open64 compiler suite. It is a bug fix
+release version for 4.5.2.
+
+ x86 Open64 is an open source, optimizing compiler for 32-bit (x86) and
+ 64-bit (x86-64) architectures. x86 Open64 supports Fortran 77/90/95, C (C89
+ and C99 with GNU extensions), and C++ (C++98 with GNU extensions), as well as
+ the shared memory programming model OpenMP (version i2.5).
+
+ The compiler source code and instrumentation library (libinstr) are released
+ under GPL v2. Libraries intended for redistribution are licensed under
+ LGPL v2.1. These libraries include libffio, libfortran, libhugetlbfs, libmv,
+ libopen64rt, libopen64rt_shared, libacml_mv, and libopenmp.
+
+
+
+2. New Features in x86 Open64 4.5.2.1
+=====================================
+
+2.1  New Fixes in x86 Open64  4.5.2.1
+----------------------------------------
+ 
+       o Fix for a corner case in array remapping triggered with -mso flag
+
+2.2  New Features in x86 Open64 4.5.2
+-------------------------------------
+
+Architecture support 
+        o Extended the open64 support for AMD Opteron Family 15h processor
+          ("Piledriver" core). The support can be enabled by using 
+          -march=bdver2. 
+        
+Infrastructure 
+        o Open64 is now a 64 bit compiler binary. The compiler build 
+          infrastructure will create 64 bit binary by default. 
+          Check the INSTALL document in the source package 
+          for details.
+
+Library 
+        o Change in how libhugetlbfs handles a memory allocation that
+          exceeds a huge page limit setting.
+
+          When a program segment or heap allocation would exhaust a
+          huge page environment variable limit setting (see below),
+          the allocation will now use huge pages to exhaust the limit.
+          Then small pages are then used satisfy the rest of the
+          current memory allocation.
+
+          When using huge pages to map program segments, the size
+          checks now properly account for COW faults on the pages for
+          initialized data.
+
+          The environment variable HUGETLB_LIMIT controls the number
+          of huge pages that can be mapped by a process via program
+          segment mapping and heap allocation.  This environment
+          variable is now also inspected during when program segments
+          are being mapped via huge pages.  Previously only the
+          environment variable HUGETLB_ELF_LIMIT would be inspected
+          when mapping program segments.  If both environment
+          variables are set then the effective huge page limit for
+          mapping program segments becomes the minimum of the two
+          settings).
+
+          This means that setting HUGETLB_LIMIT to 0 will now
+          completely disable the use of huge pages.For this to be functional
+          one needs to set HUGETLB_ELF_LIMIT to 0,as well.
+
+Optimizations
+        o Partial vectorization using isomorphic tree pattern matching that 
+          enables 128-bit AVX/SSE code generation.This feature can be enabled 
+          using the -LNO:psimd_iso=ON or the -LNO:psimd_iso_unroll=ON. 
+
+        o Aggressive factorization implementation.This feature will be ON 
+          by default.
+
+        o Improvement in proactive loop fusion implementation to handle single
+          entry multiple exit cases.
+
+        o Improved vectorization by supporting vectorization for math 
+          library function calls.   
+
+        o Transform array initialization loops to memset calls.
+
+        o Conversion of simple-if statements within loops to enable generation
+          of conditional moves
+ 
+        o Implemented aggressive loop splitting. The feature is ON by
+          default and can be disabled through -GRA:aggr_loop_splitting=off.
+
+        o Implemented new scheduling heuristic based on floating point register
+          pressure. The feature can be enabled using -CG:local_sched_alg=3.
+
+        o Improved loop unswitching.
+
+        o Support for 256-bit intrinsic for avx, fma4 and xop.
+
+           -- How to use:
+                avx      --> include x86intrin.h or immintrin.h
+                fma4/xop --> include x86intrin.h
+
+                Example:
+                        #include<x86intrin.h>
+                        union vector {
+                             __m256d v1;
+                             double f[4];
+                        };
+
+                        int main()
+                        {
+                                union vector u;
+                                u.v1 = _mm256_set_pd(1.0, 2.0, 3.0, 4.0);
+                        }
+                        
+         o Support Trailing Bit Manipulation (TBM) instruction generation.
+          Enabled by default with bdver2 and can be disabled with -mno-tbm
+
+        o Support Bit Manipulation(BMI) instruction generation.
+          Enabled by default with bdver2 and can be disabled with -mno-bmi.        
+
+        o Partial Fortran 2003 support for constant variable initialization 
+          using scalar intrinsic functions 
+
+        o Support for F16C built-ins/intrinsic. Enabled by default with bdver2. 
+ 
+3. The Packages of the Compiler Suite
+=====================================
+
+ This compiler is available in both binary and source-code forms.
+
+ o x86_open64-4.5.2.1-1.src.tar.bz2
+
+   This package contains the compiler's source code. To unpack the source, use
+   the command:
+
+     tar xjvf x86_open64-4.5.2.1-1.src.tar.bz2
+
+   For instructions on how to build the compiler from source, see the included
+   INSTALL file.
+
+ o x86_open64-4.5.2.1-1.x86_64.tar.bz2
+  
+    This package contains the 64 bit compiler binaries, suitable to run on systems
+    having GlibC version 2.11 and above. In addition if your application is 
+    taking advantage of new AMD Opteron Family 15h processor ("Piledriver" core)
+    instructions like FMA3, BMI, TBM etc you will need newer assembler. Newer OS
+    versions like SLES 11 SP2 and RHEL 6.3 come with GLIBC and Binutils which 
+    have support for AMD Opteron Family 15h processor("Piledriver"core).
+  
+    The compiler in this package is built on an x86-64-based system running 
+    SUSE Linux Enterprise Server (SLES) 11 with SP1 installed and with the 
+    required binutils.We use the system compilers (GCC 4.3.4) to build the 
+    compiler components and the newly built compiler components are used to 
+    build the libraries.
+ 
+  o x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.tar.bz2
+ 
+    This package contains the 64 bit compiler binaries,suitable to run on systems with 
+    rhel5.x sles10.x etc. OS installed. Given this the libraries shipped with in 
+    this package, especially the math routines, are optimized to take advantage
+    of older SIMD (SSE2 etc) instructions but cannot take advantage of newer 
+    instructions like AVX, XOP, FMA4 etc. Older OS versions like SLES 10.x, 
+    RHEL 5.x etc. support older Binutils, by default and so this is the 
+    recommended compiler package to be used in those systems.
+ 
+    The compiler in this package is built on an x86-64-based system running 
+    SUSE Linux Enterprise Server (SLES) 10 with SP2 installed. We use the 
+    system compilers (GCC 4.1.2) to build the compiler components and the newly
+    built compiler components are used to build the libraries.
+ 
+  o x86_open64-4.5.2.1-1.x86_64.rpm
+  
+    This package contains the same binaries as the 
+    x86_open64-4.5.2.1-1.x86_64.tar.bz2 package in RPM form.
+ 
+  o x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.rpm
+ 
+    This package contains the same binaries as the 
+    x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.tar.bz2 package in RPM form.
+ 
+  
+4. Supported Operating Systems
+==============================
+
+ The two binary packages,
+
+ o x86_open64-4.5.2.1-1.x86_64.tar.bz2
+ o x86_open64-4.5.2.1-1.x86_64.rpm
+
+ are tested and validated on 64-bit Linux systems running:
+
+ o SUSE Linux Enterprise Server (SLES) 10 with SP2
+ o SUSE Linux Enterprise Server (SLES) 10 with SP3
+ o SUSE Linux Enterprise Server (SLES) 11 with SP1
+ o SUSE Linux Enterprise Server (SLES) 11 with SP2 
+ o Red Hat Enterprise Linux (RHEL) 5.5
+ o Red Hat Enterprise Linux (RHEL) 6.1
+ o Red Hat Enterprise Linux (RHEL) 6.2
+ o Red Hat Enterprise Linux (RHEL) 6.3
+ 
+
+ x86 Open64 compilers make use of the GNU binutils package.
+ Packages known to work include:
+
+ o binutils-2.16.91.0.5-23.34.33 (SLES 10 with SP3)
+ o binutils-2.21.51.0.6 or above (SLES 11 with SP1)
+ o binutils-2.21.1 (SLES 11 with SP2)   
+ o binutils-2.17.50.0.6-12.el5 (RHEL 5.4 and RHEL 5.5)
+ o binutils-2.20.51.0.2 (RHEL 6.3) 
+
+ To fully leverage the AMD Opteron Family 15h processor("Piledriver"core)
+ features use binutils-2.21.51.0.6 or above.In case of RHEL6.3 the default 
+ binutils-2.20.51.0.2 has all the required updates to fully support AMD Opteron
+ Family 15h processor("Piledriver"core).
+
+
+5. Installing the Compiler Suite
+================================
+
+5.1 Install from bz2 Package
+----------------------------
+
+ If your system has GLibc 2.11 or above (newer OS like SLES 11 SP1
+  , RHEL 6 etc) expand, x86_open64-4.2.5.2-1.x86_64.tar.bz2. .
+  
+  To fully leverage the AMD Opteron Family 15h processor("Piledriver"core)
+  features use binutils-2.21.51.0.6 or above.In case of RHEL6.3 the default 
+  binutils-2.20.51.0.2 has all the required updates to fully support AMD Opteron
+  Family 15h processor("Piledriver"core).
+ 
+     tar xjvf x86_open64-4.5.2.1-1.x86_64.tar.bz2
+ 
+  If your system does not comply to the above, you need to expand 
+  x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.tar.bz2 
+     
+    tar xjvf x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.tar.bz2
+  
+  If desired, move the x86_open64-4.5.2.1 directory to the final
+  installation location using the 'mv' command.
+ 
+  The C, C++, FORTRAN compilers are now available in the 'bin'
+  subdirectory.
+ 
+ 
+5.2 Install from RPM Package
+----------------------------
+Normally you must have superuser privileges to install RPM packages.
+
+ If your system has GLibc 2.11 or above AND newer assembler (Binutils 
+ ver 2.21.51.0.6 or above) OR newer OS like SLES 11 SP1, RHEL 6.3 etc.,
+ you need to be using the package
+ 
+    x86_open64-4.5.2.1-1.x86_64.rpm
+
+  To fully leverage the AMD Opteron Family 15h processor("Piledriver"core)
+  features use binutils-2.21.51.0.6 or above.In case of RHEL6.3 the default 
+  binutils-2.20.51.0.2 has all the required updates to fully support AMD Opteron
+  Family 15h processor("Piledriver"core).
+    
+    To install the compiler from RPM:
+
+    $ rpm -ivh x86_open64-4.5.2.1-1.x86_64.rpm
+
+    This command will install the x86 Open64 compiler to
+    /opt/x86_open64-4.5.2.1. The C, C++, FORTRAN compilers are in folder
+    /opt/x86_open64-4.5.2.1/bin.
+
+    To install the compiler to another location:
+
+    $ rpm --prefix=/path/to/folder -ivh \
+      x86_open64-4.5.2.1-1.x86_64.rpm
+    Then the compiler will be installed to /path/to/folder.
+ 
+ If your system does not comply to the above, you need to be using the package 
+    
+    x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.rpm
+    
+    To install the compiler from RPM:
+    
+    $ rpm -ivh x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.rpm
+    
+    This command will install the x86 Open64 compiler to
+    /opt/x86_open64-4.5.2.1. The C, C++, FORTRAN compilers are in folder
+    /opt/x86_open64-4.5.2.1/bin.
+    
+    To install the compiler to another location:
+    
+    $ rpm --prefix=/path/to/folder -ivh x86_open64-4.5.2.1-1.rhel5_sles10.x86_64.rpm
+    Then the compiler will be installed to /path/to/folder.
+ 
+
+
+6. Bug Reporting and Support
+============================
+
+ To report a bug or get help with the binary releases, please see the Support
+ section on http://developer.amd.com/cpu/open64.
+
+ Bug reports should include these items in order to be reproduced:
+
+ o The compiler release version.
+
+ o System details -- the OS, libc version, etc.
+
+ o The compilation flags that trigger the bug.
+
+ o The test file if applicable (it is highly appreciated if the test file is
+   minimized).
+
+ o The correct output of the test file.
+
+
+
+7. Known Issues and Limitations
+===============================
+
+ o Linux Operating Systems are frequently configured with a soft limit on
+   process stack sizes. Programs that exceed these limits by methods such as
+   placing very large arrays on the stack will terminate with a segmentation
+   violation. You can query and alter these limits using the ulimit command
+   (ksh, sh and bash) or limit command (tcsh, csh).
+
+ o Open64 does not support the following GCC extensions:
+   - complex integer data types
+   - decimal floating point types
+   - GCC vector types containing a single element
+   - GCC vector types whose base type is char and whose overall size is less
+     than 8 bytes
+   - the __builtin_object_size function
+   - the __builtin_apply function
+   - vector types other than MMX (8-byte) and SSE (16-bit)
+
+   The __builtin_return_address function is supported only with no
+   optimization.
+
+ o Open64 does not fully support C99 variable length arrays.
+
+ o To provide the best runtime performance, the compiler makes assumptions that
+   runtime integer arithmetic expressions that arise in certain contexts do not
+   overflow (that is, they do not produce values that are too high or too low
+   to represent).  These assumptions apply to expressions that are present in
+   user code as well as expressions that the compiler constructs.  Note that if
+   an integer arithmetic overflow assumption is violated, runtime behavior is
+   undefined.
+
+   Option '-OPT:wrap_around_unsafe=off' instructs the compiler to be
+   conservative about integer overflow assumptions and avoid performing
+   optimizations that are based on integer overflow assumptions, for example,
+   linear function test replacement.
+
+ o Open64 4.5.2 does not fully support all intrinsics in SSE4.1, SSE4.2, SSSE3, 
+   ,pclmul, AES, given that Open64 uses GCC 4.2 front end. Open64 cannot package
+   the newer header files from GCC 4.5.x or greater since these releases are under
+   GPLv3 license. 
+      
+ o Binutils requires to be 2.21.51.0.6 or above to use the new AMD Opteron Family 15h 
+   processor ("Piledriver" core) instructions.  
+
+ o In certain OSes like RHEL, Fedora etc. for shared objects. one may not be 
+   able to override RPATH using LD_LIRARY_PATH, since the dynamic linker sets,
+   only the DT_RPATH value and not DT_RUNPATH. The current workaround for this
+   issue would be to patch the binary using utility like PatchElf 
+   (http://nixos.org/patchelf.html)
+  
+o The below listed are the known problems in 256-bit intrinsic for avx, fma4 
+  and xop.
+   - Use -CG:move_aligned=off for 256-bit intrinsic for avx, fma4 and xop  
+   - In avx _mm256_extract_epi* _mm256_insert_epi* are not supported
+   - In xop _mm256_permute2_p[s,d] are not supported
+   - The below listed intrinsics are not supported 
+       _mm_maskload_pd (double const *__P, __m128i __M)
+       _mm_maskstore_pd (double *__P, __m128i __M, __m128d __A)
+       _mm256_maskload_pd (double const *__P, __m256i __M)
+       _mm256_maskstore_pd (double *__P, __m256i __M, __m256d __A)
+       _mm_maskload_ps (float const *__P, __m128i __M)
+       _mm_maskstore_ps (float *__P, __m128i __M, __m128 __A)
+       _mm256_maskload_ps (float const *__P, __m256i __M)
+       _mm256_maskstore_ps (float *__P, __m256i __M, __m256 __A)
+       _mm256_stream_si256 (__m256i *__A, __m256i __B)
+               
+o For intrinsic which has 256 bit argument or return type the below workaround
+  has to be used
+     opencc -march=bdver2 -mf16c -CG:local_sched=off test.c
+
